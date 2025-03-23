@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#00FFB2" />
+    <meta
+      name="description"
+      content="TobeShop - Your cutting-edge shopping platform for the digital age"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    />
+    
+    <title>TobeShop | Next-Gen Shopping</title>
+    
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0A0A0A;
+        color: #FFFFFF;
+        font-family: 'Inter', sans-serif;
+      }
+      
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Custom scrollbar for the entire document */
+      ::-webkit-scrollbar {
+        width: 8px;
+        background-color: #0A0A0A;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background-color: #333333;
+        border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: #444444;
+      }
+      
+      /* Loading animation */
+      .app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #0A0A0A;
+        z-index: 9999;
+      }
+      
+      .app-loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 3px solid transparent;
+        border-top-color: #00FFB2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      
+      .app-loading-text {
+        color: #FFFFFF;
+        font-family: 'Inter', sans-serif;
+        font-size: 16px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+      <div class="app-loading">
+        <div class="app-loading-spinner"></div>
+        <div class="app-loading-text">Loading TobeShop</div>
+      </div>
+    </div>
+  </body>
+</html> 

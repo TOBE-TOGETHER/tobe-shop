@@ -1,0 +1,25 @@
+# Common
+.git
+.gitignore
+.github
+.DS_Store
+.env
+README.md
+*.md
+
+# Node.js / React
+client/node_modules
+client/build
+client/coverage
+client/.env
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+
+# Go
+server/vendor/
+server/tmp/ 

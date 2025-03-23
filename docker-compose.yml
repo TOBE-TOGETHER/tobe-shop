@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  # Backend service
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: tobe-shop-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server/tobe_shop.db:/app/tobe_shop.db
+    networks:
+      - tobe-shop-network
+    restart: unless-stopped
+
+  # Frontend service
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: tobe-shop-client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - tobe-shop-network
+    restart: unless-stopped
+
+# Define a network for the services
+networks:
+  tobe-shop-network:
+    driver: bridge
