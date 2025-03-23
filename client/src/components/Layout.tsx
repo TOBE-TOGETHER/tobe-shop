@@ -19,6 +19,8 @@ import {
   Typography,
   Chip,
   CssBaseline,
+  Tooltip,
+  Badge,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -29,6 +31,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '../hooks/useUser';
+import { useCart } from '../contexts/CartContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 import Footer from './Footer';
@@ -43,6 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isSeller, logout } = useAuth();
   const { user, refresh } = useUser();
+  const { getCartCount } = useCart();
   const hasRefreshed = useRef(false);
   const { t } = useTranslation();
 
@@ -188,7 +192,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <LanguageSwitcher />
 
           <IconButton color="inherit" component={RouterLink} to="/cart">
-            <ShoppingCartIcon />
+            <Badge badgeContent={getCartCount()} color="secondary">
+              <ShoppingCartIcon />
+            </Badge>
           </IconButton>
 
           {!isAuthenticated ? (

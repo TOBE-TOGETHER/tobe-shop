@@ -78,38 +78,6 @@ npm start
 
 The frontend development server will run on http://localhost:3000
 
-#### Docker Setup
-
-You can use Docker to run both the frontend and backend together:
-
-1. Make sure Docker and Docker Compose are installed on your system
-2. From the project root, run:
-
-```bash
-docker-compose up -d
-```
-
-This will:
-
-- Build and start the backend on port 8080
-- Build and start the frontend on port 80
-
-To access the application, open http://localhost in your browser.
-
-To stop the containers:
-
-```bash
-docker-compose down
-```
-
-### Development
-
-If you want to rebuild the containers after making changes:
-
-```bash
-docker-compose up -d --build
-```
-
 ## License
 
 This project is for educational purposes only.

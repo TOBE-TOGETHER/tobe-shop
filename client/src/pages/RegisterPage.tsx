@@ -23,6 +23,7 @@ import {
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useTranslation } from 'react-i18next';
+import { apiPost } from '../utils/api';
 
 interface FormData {
   username: string;
@@ -47,6 +48,20 @@ interface FormErrors {
   phone?: string;
   address?: string;
   submit?: string;
+}
+
+// Define response type for registration API
+interface RegisterResponse {
+  message: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
+  token?: string;
 }
 
 const RegisterPage: React.FC = () => {
@@ -149,42 +164,31 @@ const RegisterPage: React.FC = () => {
       
       console.log('Sending registration data:', userData);
       
-      // Make the API call
-      const response = await fetch('http://localhost:8080/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        // Log the detailed error for debugging
-        console.error('Registration failed:', data);
+      // Use apiPost utility instead of fetch
+      try {
+        const data = await apiPost<RegisterResponse>('register', userData);
+        console.log('Registration successful:', data);
+        
+        // Registration successful - redirect to login
+        navigate('/login', { state: { message: t('auth.registerSuccess') } });
+      } catch (apiError: any) {
+        // Handle API-specific errors
+        console.error('API error during registration:', apiError);
+        
+        // Extract error message from the API error
+        const errorMessage = apiError.message || '';
         
         // Handle specific error messages
-        if (data.error) {
-          if (data.error.includes('Username already exists')) {
-            setErrors({ ...errors, username: t('auth.usernameTaken') });
-          } else if (data.error.includes('Email already exists')) {
-            setErrors({ ...errors, email: t('auth.emailTaken') });
-          } else if (data.error.includes('Missing required fields')) {
-            setErrors({ ...errors, submit: data.error });
-          } else {
-            setErrors({ ...errors, submit: data.error });
-          }
+        if (errorMessage.includes('Username already exists')) {
+          setErrors({ ...errors, username: t('auth.usernameTaken') });
+        } else if (errorMessage.includes('Email already exists')) {
+          setErrors({ ...errors, email: t('auth.emailTaken') });
+        } else if (errorMessage.includes('Missing required fields')) {
+          setErrors({ ...errors, submit: errorMessage });
         } else {
-          throw new Error(t('auth.registrationFailed'));
+          setErrors({ ...errors, submit: errorMessage });
         }
-        return;
       }
-      
-      console.log('Registration successful:', data);
-      
-      // Registration successful - redirect to login
-      navigate('/login', { state: { message: t('auth.registerSuccess') } });
     } catch (error) {
       console.error('Registration error:', error);
       setErrors({

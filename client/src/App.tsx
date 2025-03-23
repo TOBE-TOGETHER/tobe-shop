@@ -16,6 +16,7 @@ import ProfilePage from './pages/ProfilePage';
 import ShopsListPage from './pages/ShopsListPage';
 import ShopDetailPage from './pages/ShopDetailPage';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/i18n';
 import PrivateRoute from './components/PrivateRoute';
@@ -190,43 +191,45 @@ theme = responsiveFontSizes(theme);
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <I18nextProvider i18n={i18n}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Router>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/products" element={<ProductListPage />} />
-                <Route path="/products/:id" element={<ProductDetailPage />} />
-                <Route path="/shops" element={<ShopsListPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route 
-                  path="/my/shops" 
-                  element={
-                    <PrivateRoute roles={['seller']}>
-                      <ShopManagementPage />
-                    </PrivateRoute>
-                  } 
-                />
-                <Route 
-                  path="/my/products" 
-                  element={
-                    <PrivateRoute roles={['seller']}>
-                      <ProductManagementPage />
-                    </PrivateRoute>
-                  } 
-                />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/shops/:id" element={<ShopDetailPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Layout>
-          </Router>
-        </ThemeProvider>
-      </I18nextProvider>
+      <CartProvider>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Router>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/products" element={<ProductListPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/shops" element={<ShopsListPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route 
+                    path="/my/shops" 
+                    element={
+                      <PrivateRoute roles={['seller']}>
+                        <ShopManagementPage />
+                      </PrivateRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/my/products" 
+                    element={
+                      <PrivateRoute roles={['seller']}>
+                        <ProductManagementPage />
+                      </PrivateRoute>
+                    } 
+                  />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/shops/:id" element={<ShopDetailPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Layout>
+            </Router>
+          </ThemeProvider>
+        </I18nextProvider>
+      </CartProvider>
     </AuthProvider>
   );
 };

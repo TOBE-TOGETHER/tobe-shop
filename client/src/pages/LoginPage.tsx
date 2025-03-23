@@ -14,9 +14,30 @@ import {
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { apiPost } from '../utils/api';
 
 interface LocationState {
   message?: string;
+}
+
+// Define the response type for login API
+interface LoginResponse {
+  token: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    phone?: string;
+    address?: string;
+    avatar?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    shopId?: number;
+  };
+  message: string;
 }
 
 const LoginPage: React.FC = () => {
@@ -99,23 +120,11 @@ const LoginPage: React.FC = () => {
     try {
       console.log('Attempting login with:', formData.email);
       
-      // Make API call to backend
-      const response = await fetch('http://localhost:8080/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email.trim(),
-          password: formData.password,
-        }),
+      // Use apiPost utility instead of fetch with proper type
+      const data = await apiPost<LoginResponse>('login', {
+        email: formData.email.trim(),
+        password: formData.password,
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || t('auth.invalidCredentials'));
-      }
       
       console.log('Login successful, user data received');
       

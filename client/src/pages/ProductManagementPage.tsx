@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -36,6 +36,7 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { apiGet, apiPost, apiPut } from '../utils/api';
 
 // Define Product interface based on server model
 interface Product {
@@ -60,6 +61,8 @@ interface Shop {
   logo: string;
   address: string;
   userId: number;
+  ownerId?: number;
+  ownerUsername?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -148,15 +151,13 @@ const StyledShopCard = styled(Card)(({ theme }) => ({
 
 const ProductManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { token, userId } = useAuth();
+  const { token, userId, user } = useAuth();
   const theme = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [shopLoading, setShopLoading] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
-  
-  // Dialog states
+  const [loading, setLoading] = useState(false);
+  const [shopLoading, setShopLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -170,7 +171,7 @@ const ProductManagementPage: React.FC = () => {
     category: '',
     stock: 0,
     status: 'available',
-    shopId: userId !== null ? userId : undefined
+    shopId: shop?.id
   });
   
   // Form validation errors
@@ -183,109 +184,101 @@ const ProductManagementPage: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
   
+  // Show snackbar helper
+  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  };
+  
+  // Fetch products for selected shop
+  const fetchProducts = useCallback(async () => {
+    if (!shop) return;
+    
+    setLoading(true);
+    
+    try {
+      // Use apiGet instead of fetch
+      const data = await apiGet<{products: Product[]}>(`products?shopId=${shop.id}`);
+      setProducts(data.products || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError(error instanceof Error ? error.message : t('common.networkError'));
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [shop, t]);
+  
+  // Fetch user's shops
+  const fetchUserShops = useCallback(async () => {
+    setShopLoading(true);
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error(t('auth.tokenNotFound'));
+      }
+      
+      // Extract user ID from token (format: "<userId>_<username>_<timestamp>")
+      const parts = token.split('_');
+      if (parts.length < 1) {
+        throw new Error(t('auth.invalidToken'));
+      }
+      
+      const userId = parts[0];
+      
+      // Use apiGet instead of fetch
+      try {
+        const data = await apiGet<{shops: Shop[]}>(`users/${userId}/shops`, token);
+        setShop(data.shops[0]);
+      } catch (err) {
+        console.warn('Failed to fetch user shops, trying fallback:', err);
+        
+        // Fallback: Try to get all shops and filter by owner
+        const fallbackData = await apiGet<{shops: Shop[]}>('shops', token);
+        const userShops = (fallbackData.shops || []).filter(shop => 
+          shop.ownerId === parseInt(userId, 10) || shop.ownerUsername === user?.username
+        );
+        
+        setShop(userShops[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching shops:', error);
+      setError(error instanceof Error ? error.message : t('common.networkError'));
+    } finally {
+      setShopLoading(false);
+    }
+  }, [t, user?.username]);
+  
   // Fetch products from API on component mount
   useEffect(() => {
-    fetchShop();
-  }, []);
+    fetchUserShops();
+  }, [fetchUserShops]);
   
   // Refetch products when shop changes
   useEffect(() => {
     if (shop) {
       fetchProducts();
     }
-  }, [shop]);
+  }, [shop, fetchProducts]);
   
-  // Function to fetch the user's shop from the backend
-  const fetchShop = async () => {
-    if (!token || !userId) return;
-    
-    setShopLoading(true);
-    try {
-      // First try to fetch from user-specific shop endpoint
-      const response = await fetch(`http://localhost:8080/api/users/${userId}/shops`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        // If 404, try the general shops endpoint
-        if (response.status === 404) {
-          const fallbackResponse = await fetch(`http://localhost:8080/api/shops`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (!fallbackResponse.ok) {
-            throw new Error(`Failed to fetch shop data: ${fallbackResponse.status}`);
-          }
-          
-          const data = await fallbackResponse.json();
-          
-          // Find the shop for the current user
-          let userShop = null;
-          if (data.shops && Array.isArray(data.shops)) {
-            userShop = data.shops.find((s: any) => s.userId === userId);
-          } else if (Array.isArray(data)) {
-            userShop = data.find((s: any) => s.userId === userId);
-          }
-          
-          setShop(userShop);
-          return;
-        }
-        
-        throw new Error(`Failed to fetch shop data: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Process different response formats
-      let userShop = null;
-      if (data.shops && Array.isArray(data.shops)) {
-        userShop = data.shops.find((s: any) => s.userId === userId);
-      } else if (Array.isArray(data)) {
-        userShop = data.find((s: any) => s.userId === userId);
-      } else if (data.shop) {
-        userShop = data.shop;
-      }
-      
-      setShop(userShop);
-    } catch (err) {
-      console.error('Error fetching shop:', err);
-    } finally {
-      setShopLoading(false);
-    }
-  };
-  
-  // Function to fetch products from the backend
-  const fetchProducts = async () => {
-    if (!token || !shop) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Fetch products for the current shop
-      const response = await fetch(`http://localhost:8080/api/products?shopId=${shop.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      
-      const data = await response.json();
-      setProducts(data.products || []);
-      console.log('Fetched products:', data.products);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while fetching products');
-    } finally {
-      setLoading(false);
-    }
+  // Reset form to initial state
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: 0,
+      image: '',
+      category: '',
+      stock: 0,
+      status: 'available',
+      shopId: shop?.id
+    });
+    setFormErrors({});
   };
   
   // Handle edit button click
@@ -345,12 +338,47 @@ const ProductManagementPage: React.FC = () => {
     });
   };
 
-  // Handle status change
-  const handleStatusChange = (event: SelectChangeEvent<string>) => {
+  // Handle form status change
+  const handleFormStatusChange = (event: SelectChangeEvent<string>) => {
     setFormData({
       ...formData,
       status: event.target.value
     });
+  };
+
+  // Handle status change
+  const handleStatusChange = async (product: Product, newStatus: string) => {
+    setLoading(true);
+    
+    try {
+      // Get token from localStorage
+      const authToken = localStorage.getItem('token');
+      if (!authToken) {
+        throw new Error(t('auth.tokenNotFound'));
+      }
+      
+      // Use apiPut instead of fetch
+      await apiPut<{product: Product}>(`products/${product.id}`, { 
+        status: newStatus 
+      }, authToken);
+      
+      // Update local state
+      setProducts(products.map(p => 
+        p.id === product.id ? { ...p, status: newStatus } : p
+      ));
+      
+      showSnackbar(t('productManagement.statusUpdateSuccess'), 'success');
+    } catch (error) {
+      console.error('Error updating product status:', error);
+      showSnackbar(
+        error instanceof Error 
+          ? error.message 
+          : t('productManagement.statusUpdateError'),
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Handle delete product
@@ -358,33 +386,25 @@ const ProductManagementPage: React.FC = () => {
     if (!selectedProduct || !selectedProduct.id) return;
     
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${selectedProduct.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete product');
+      // Get token from localStorage
+      const authToken = localStorage.getItem('token');
+      if (!authToken) {
+        throw new Error(t('auth.tokenNotFound'));
       }
+      
+      await apiPut(`products/${selectedProduct.id}/delete`, {}, authToken);
       
       // Update local state
       setProducts(products.filter(p => p.id !== selectedProduct.id));
       
       // Show success message
-      setSnackbar({
-        open: true,
-        message: t('products.deleteSuccess'),
-        severity: 'success',
-      });
+      showSnackbar(t('products.deleteSuccess'), 'success');
     } catch (err) {
       console.error('Error deleting product:', err);
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : t('common.error'),
-        severity: 'error',
-      });
+      showSnackbar(
+        err instanceof Error ? err.message : t('common.error'),
+        'error'
+      );
     } finally {
       setOpenDeleteDialog(false);
       setSelectedProduct(null);
@@ -433,20 +453,16 @@ const ProductManagementPage: React.FC = () => {
     
     // Make sure we have a shop to add products to
     if (!shop) {
-      setSnackbar({
-        open: true,
-        message: t('products.noShopError'),
-        severity: 'error',
-      });
+      showSnackbar(t('products.noShopWarning'), 'error');
       return;
     }
     
     try {
-      const url = selectedProduct?.id 
-        ? `http://localhost:8080/api/products/${selectedProduct.id}` 
-        : 'http://localhost:8080/api/products';
-        
-      const method = selectedProduct?.id ? 'PUT' : 'POST';
+      // Get token from localStorage
+      const authToken = localStorage.getItem('token');
+      if (!authToken) {
+        throw new Error(t('auth.tokenNotFound'));
+      }
       
       // Include the shopId in the form data
       const productData = {
@@ -457,107 +473,47 @@ const ProductManagementPage: React.FC = () => {
       
       console.log('Sending product data:', JSON.stringify(productData));
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(productData),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = 'Failed to save product';
-        
-        try {
-          // Try to parse as JSON if possible
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // If not JSON, use the text as is
-          if (errorText) errorMessage = errorText;
-        }
-        
-        // Special handling for specific status codes
-        if (response.status === 403) {
-          throw new Error('You can only update products from your own shop. Please refresh and try again.');
-        } else if (response.status === 401) {
-          throw new Error('Your session has expired. Please log in again.');
-        } else {
-          throw new Error(errorMessage);
-        }
-      }
-      
-      // Parse response data
-      let data;
-      try {
-        const responseText = await response.text();
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch (e) {
-        console.warn('Could not parse response as JSON:', e);
-        data = { product: productData }; // Fallback to using the sent data
-      }
-      
+      let response;
       if (selectedProduct?.id) {
-        // Ensure we have a product object to work with
-        const updatedProduct = data.product || {
+        // Update existing product
+        response = await apiPut<{product: Product}>(`products/${selectedProduct.id}`, productData, authToken);
+        
+        // Update existing product in state
+        const updatedProduct = response.product || {
           ...productData,
           id: selectedProduct.id
         };
         
-        // Update existing product in state
         setProducts(products.map(p => p.id === selectedProduct.id ? updatedProduct : p));
-        setSnackbar({
-          open: true,
-          message: t('products.updateSuccess'),
-          severity: 'success',
-        });
+        showSnackbar(t('products.updateSuccess'), 'success');
       } else {
-        // Ensure we have a product object with an ID
-        const newProduct = data.product || {
+        // Create new product
+        response = await apiPost<{product: Product}>('products', productData, authToken);
+        
+        // Add new product to state
+        const newProduct = response.product || {
           ...productData,
           id: Date.now() // Temporary ID as fallback
         };
         
-        // Add new product to state
         setProducts([...products, newProduct]);
-        setSnackbar({
-          open: true,
-          message: t('products.addSuccess'),
-          severity: 'success',
-        });
+        showSnackbar(t('products.addSuccess'), 'success');
       }
       
       // Close the form
       setOpenForm(false);
     } catch (err) {
       console.error('Error saving product:', err);
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : t('common.error'),
-        severity: 'error',
-      });
+      showSnackbar(
+        err instanceof Error ? err.message : t('common.error'),
+        'error'
+      );
     }
   };
   
   // Handle close snackbar
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
-  };
-  
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: 0,
-      image: '',
-      category: '',
-      stock: 0,
-      status: 'available',
-      shopId: userId !== null ? userId : undefined
-    });
-    setFormErrors({});
   };
   
   return (
@@ -852,7 +808,7 @@ const ProductManagementPage: React.FC = () => {
               id="status"
               name="status"
               value={formData.status || 'available'}
-              onChange={handleStatusChange}
+              onChange={handleFormStatusChange}
               label={t('products.status')}
             >
               {statusOptions.map((option) => (

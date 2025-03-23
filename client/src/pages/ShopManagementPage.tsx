@@ -31,6 +31,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import StoreOutlinedIcon from '@mui/icons-material/StoreOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import { apiGet, apiPost, apiPut, getResponseText } from '../utils/api';
 
 // Interface for Shop
 interface Shop {
@@ -178,6 +179,43 @@ const ShopManagementPage: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'info' | 'warning'
   });
 
+  // Process shop data from different response formats
+  const processShopData = React.useCallback((data: any, currentUserId: number | null) => {
+    if (!currentUserId) {
+      setShop(null);
+      return;
+    }
+
+    let userShop = null;
+
+    // Handle different response formats
+    if (data.shops && Array.isArray(data.shops)) {
+      // Response format: {shops: [...]}
+      userShop = data.shops.find((s: any) =>
+        s.userId === currentUserId || s.userId === Number(currentUserId)
+      );
+      console.log('User shop found from shops array:', userShop, 'for userId:', currentUserId);
+    } else if (Array.isArray(data)) {
+      // Response format: direct array of shops
+      userShop = data.find((s: any) =>
+        s.userId === currentUserId || s.userId === Number(currentUserId)
+      );
+      console.log('User shop found from direct array:', userShop, 'for userId:', currentUserId);
+    } else if (data.shop) {
+      // Response format: {shop: {...}}
+      userShop = data.shop;
+      console.log('User shop found from shop object:', userShop);
+    } else if (data.message) {
+      // Placeholder implementation
+      console.log('No shops data available: ', data.message);
+    } else {
+      console.log('Unknown response format or no shops available');
+    }
+
+    setShop(userShop);
+    setError(null);
+  }, []);
+
   // Fetch user's shop data
   const fetchShopData = React.useCallback(async () => {
     if (!isInitialized) {
@@ -215,35 +253,19 @@ const ShopManagementPage: React.FC = () => {
       
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:8080/api/users/${tokenUserId}/shops`, {
-          headers: {
-            'Authorization': `Bearer ${storedToken}`
-          }
-        });
-        
-        if (!response.ok) {
-          // Handle 404 case with fallback
-          if (response.status === 404) {
-            const fallbackResponse = await fetch(`http://localhost:8080/api/shops`, {
-              headers: {
-                'Authorization': `Bearer ${storedToken}`
-              }
-            });
-            
-            if (!fallbackResponse.ok) {
-              throw new Error(`Failed to fetch shop data: ${fallbackResponse.status}`);
-            }
-            
-            const data = await fallbackResponse.json();
+        try {
+          // Use apiGet utility
+          const data = await apiGet<any>(`users/${tokenUserId}/shops`, storedToken);
+          processShopData(data, tokenUserId);
+        } catch (err: any) {
+          // If the specific endpoint doesn't exist, fall back to the general shops endpoint
+          if (err.status === 404) {
+            const data = await apiGet<any>(`shops`, storedToken);
             processShopData(data, tokenUserId);
-            return;
+          } else {
+            throw err;
           }
-          
-          throw new Error(`Failed to fetch shop data: ${response.status}`);
         }
-        
-        const data = await response.json();
-        processShopData(data, tokenUserId);
       } catch (err) {
         console.error('Error fetching shop data:', err);
         setError('Failed to load shop data');
@@ -260,52 +282,26 @@ const ShopManagementPage: React.FC = () => {
     setLoading(true);
     try {
       // Try fetching user's shops from the API
-      const response = await fetch(`http://localhost:8080/api/users/${userId}/shops`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
+      try {
+        // Use apiGet utility
+        const data = await apiGet<any>(`users/${userId}/shops`, token);
+        processShopData(data, userId);
+      } catch (err: any) {
         // If the specific endpoint doesn't exist, fall back to the general shops endpoint
-        if (response.status === 404) {
+        if (err.status === 404) {
           console.log('User-specific shops endpoint not found, falling back to general endpoint');
-          const fallbackResponse = await fetch(`http://localhost:8080/api/shops`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (!fallbackResponse.ok) {
-            const errorText = await fallbackResponse.text();
-            console.error('Shop fetch error:', fallbackResponse.status, errorText);
-            throw new Error(`Failed to fetch shop data: ${fallbackResponse.status} ${errorText}`);
-          }
-
-          const data = await fallbackResponse.json();
+          const data = await apiGet<any>(`shops`, token);
           console.log('General shops data response:', data);
-
           processShopData(data, userId);
-          return;
         }
-
         // Handle 403 forbidden (user not authorized) as "no shop" rather than an error
-        if (response.status === 403) {
+        else if (err.status === 403) {
           console.log('User not authorized to view this shop. Treating as no shop available.');
           setShop(null);
-          setLoading(false);
-          return;
+        } else {
+          throw err;
         }
-
-        const errorText = await response.text();
-        console.error('Shop fetch error:', response.status, errorText);
-        throw new Error(`Failed to fetch shop data: ${response.status} ${errorText}`);
       }
-
-      const data = await response.json();
-      console.log('User shops data response:', data);
-
-      processShopData(data, userId);
     } catch (err) {
       console.error('Error fetching shop data:', err);
       setError('Failed to load shop data');
@@ -314,44 +310,7 @@ const ShopManagementPage: React.FC = () => {
       setLoading(false);
       setInitialLoadAttempted(true);
     }
-  }, [token, userId, isInitialized]);
-
-  // Process shop data from different response formats
-  const processShopData = (data: any, currentUserId: number | null) => {
-    if (!currentUserId) {
-      setShop(null);
-      return;
-    }
-
-    let userShop = null;
-
-    // Handle different response formats
-    if (data.shops && Array.isArray(data.shops)) {
-      // Response format: {shops: [...]}
-      userShop = data.shops.find((s: any) =>
-        s.userId === currentUserId || s.userId === Number(currentUserId)
-      );
-      console.log('User shop found from shops array:', userShop, 'for userId:', currentUserId);
-    } else if (Array.isArray(data)) {
-      // Response format: direct array of shops
-      userShop = data.find((s: any) =>
-        s.userId === currentUserId || s.userId === Number(currentUserId)
-      );
-      console.log('User shop found from direct array:', userShop, 'for userId:', currentUserId);
-    } else if (data.shop) {
-      // Response format: {shop: {...}}
-      userShop = data.shop;
-      console.log('User shop found from shop object:', userShop);
-    } else if (data.message) {
-      // Placeholder implementation
-      console.log('No shops data available: ', data.message);
-    } else {
-      console.log('Unknown response format or no shops available');
-    }
-
-    setShop(userShop);
-    setError(null);
-  };
+  }, [token, userId, isInitialized, processShopData]);
 
   // Refresh user data if we have a token but no user
   useEffect(() => {
@@ -444,22 +403,14 @@ const ShopManagementPage: React.FC = () => {
       if (shop) {
         // Update existing shop
         console.log('Updating shop:', shop.id, formData);
-        const response = await fetch(`http://localhost:8080/api/shops/${shop.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(formData)
-        });
-
-        const responseText = await response.text();
-        console.log('Update shop response:', response.status, responseText);
-
-        if (!response.ok) {
-          throw new Error(`Failed to update shop: ${response.status} ${responseText}`);
-        }
-
+        const response = await apiPut<any>(`shops/${shop.id}`, formData, token);
+        console.log('Update shop response:', response);
+        
+        // Update the shop in state
+        setShop(response.shop || response);
+        setOpenForm(false);
+        
+        // Success message
         setSnackbar({
           open: true,
           message: t('shops.updateSuccess'),
@@ -469,79 +420,20 @@ const ShopManagementPage: React.FC = () => {
         // Create new shop
         console.log('Creating new shop:', formData);
 
-        // For debugging - log request details
-        console.log('Request headers:', {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+        // Use apiPost utility
+        const response = await apiPost<any>('shops', formData, token);
+        console.log('Create shop response:', response);
+        
+        // Update the shop in state
+        setShop(response.shop || response);
+        setOpenForm(false);
+        
+        // Success message
+        setSnackbar({
+          open: true,
+          message: t('shops.createSuccess'),
+          severity: 'success'
         });
-        console.log('Request body:', JSON.stringify(formData));
-
-        try {
-          const response = await fetch('http://localhost:8080/api/shops', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(formData)
-          });
-
-          let responseText;
-          try {
-            responseText = await response.text();
-          } catch (e) {
-            responseText = 'Could not get response text';
-          }
-
-          console.log('Create shop response:', response.status, responseText);
-
-          if (!response.ok) {
-            // For 404 errors, display a more specific message but continue
-            if (response.status === 404) {
-              console.warn('Shop creation API is not available - using local fallback');
-
-              // Create a temporary local shop object
-              const tempShop: Shop = {
-                id: Date.now(), // Temporary ID
-                name: formData.name,
-                description: formData.description,
-                logo: formData.logo,
-                address: formData.address,
-                userId: userId || 0, // Use token-extracted userId
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              };
-
-              // Set the shop locally
-              setShop(tempShop);
-
-              // Show success message
-              setSnackbar({
-                open: true,
-                message: t('shops.createSuccess') + ' (Local Only)',
-                severity: 'warning'
-              });
-
-              // No need to refresh data
-              handleCloseForm();
-              return;
-            }
-
-            throw new Error(`Failed to create shop: ${response.status} ${responseText}`);
-          }
-
-          setSnackbar({
-            open: true,
-            message: t('shops.createSuccess'),
-            severity: 'success'
-          });
-
-          // Refresh user data to update role
-          await refreshUserData();
-        } catch (fetchError) {
-          console.error('Fetch error:', fetchError);
-          throw fetchError;
-        }
       }
 
       // Fetch updated shop data

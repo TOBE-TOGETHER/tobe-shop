@@ -19,6 +19,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Product } from '../components/products/ProductCard';
+import { apiGet } from '../utils/api';
 
 // Styled components for the futuristic UI
 const HeroSection = styled(Box)(({ theme }) => ({
@@ -195,14 +196,9 @@ const HomePage: React.FC = () => {
     setError(null);
 
     try {
-      // Update API endpoint to use port 8080 and sort by featured
-      const response = await fetch('http://localhost:8080/api/products?status=available&page=1&limit=8&sort=featured');
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      // Use the API utility instead of fetch directly
+      const data = await apiGet<any>('products?status=available&page=1&limit=8&sort=featured');
+      
       // The response likely has a different structure - adjust to match actual response
       setFeaturedProducts(data.products || data || []);
 
@@ -221,14 +217,9 @@ const HomePage: React.FC = () => {
     setShopsError(null);
     
     try {
-      // Fetch shops from API
-      const response = await fetch('http://localhost:8080/api/shops?page=1&limit=8&sort=featured');
+      // Use the API utility instead of fetch directly
+      const data = await apiGet<any>('shops?page=1&limit=8&sort=featured');
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
       // The response likely has a different structure - adjust to match actual response
       setFeaturedShops(data.shops || data || []);
       

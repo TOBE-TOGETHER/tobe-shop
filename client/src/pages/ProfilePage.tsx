@@ -28,6 +28,23 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '../hooks/useUser';
 import { useTranslation } from 'react-i18next';
+import { apiPut } from '../utils/api';
+
+// Importing the User interface from useUser.ts
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  shopId?: number;
+}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -157,20 +174,8 @@ const ProfilePage: React.FC = () => {
       
       const userId = parts[0];
       
-      const response = await fetch(`http://localhost:8080/api/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || t('profile.updateFailed'));
-      }
+      // Use apiPut instead of fetch
+      const data = await apiPut<{user: User}>(`users/${userId}`, formData);
       
       // Update user data in context using the useUser hook
       updateUser(data.user);
@@ -252,20 +257,8 @@ const ProfilePage: React.FC = () => {
         
         const userId = parts[0];
         
-        const response = await fetch(`http://localhost:8080/api/users/${userId}/avatar`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ avatar: dataUrl })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || t('profile.avatarUpdateFailed'));
-        }
+        // Use apiPut instead of fetch
+        const data = await apiPut<{user: User}>(`users/${userId}/avatar`, { avatar: dataUrl });
         
         // Update user data in context
         updateUser(data.user);

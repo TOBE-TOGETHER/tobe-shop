@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { apiGet } from '../utils/api';
 
 interface User {
   id: number;
@@ -161,33 +162,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userIdFromToken = parts[0];
       console.log('Refreshing data for user ID:', userIdFromToken);
 
-      const response = await fetch(`http://localhost:8080/api/users/${userIdFromToken}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${storedToken}`
-        }
-      });
+      try {
+        // Use the API utility instead of fetch directly
+        const data = await apiGet<any>(`users/${userIdFromToken}`, storedToken);
 
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
+        if (data.user) {
+          setUser(data.user);
+          setIsAuthenticated(true);
+          // Update localStorage
+          localStorage.setItem('user', JSON.stringify(data.user));
+          console.log('User data refreshed successfully');
+        } else {
+          console.error('No user data in response');
+          throw new Error('No user data returned from server');
+        }
+      } catch (err: any) {
+        // Handle unauthorized errors
+        if (err.status === 401 || err.status === 403) {
           console.log('Authentication expired or invalid');
           logout();
           return;
         }
-        throw new Error(`Failed to refresh user data: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.user) {
-        setUser(data.user);
-        setIsAuthenticated(true);
-        // Update localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('User data refreshed successfully');
-      } else {
-        console.error('No user data in response');
-        throw new Error('No user data returned from server');
+        throw err;
       }
     } catch (error) {
       console.error('Error refreshing user data:', error);

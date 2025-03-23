@@ -26,6 +26,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { useTranslation } from 'react-i18next';
 import ProductCard, { Product } from '../components/products/ProductCard';
+import { apiGet } from '../utils/api';
 
 // Define interfaces
 interface Shop {
@@ -72,35 +73,28 @@ const ShopDetailPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   
-  // Fetch shop details
+  // Fetch shop data
   useEffect(() => {
     const fetchShopDetails = async () => {
       setLoading(true);
       setError(null);
       
       try {
-        // Fetch shop details
-        const shopResponse = await fetch(`http://localhost:8080/api/shops/${id}`);
-        
-        if (!shopResponse.ok) {
-          throw new Error('Failed to fetch shop details');
-        }
-        
-        const shopData = await shopResponse.json();
+        // Use apiGet utility instead of fetch for shop data
+        const shopData = await apiGet<{shop: Shop}>(`shops/${id}`);
         setShop(shopData.shop);
         
         // Fetch products for this shop
-        const productsResponse = await fetch(`http://localhost:8080/api/products?shopId=${id}&status=available`);
-        
-        if (!productsResponse.ok) {
-          throw new Error('Failed to fetch shop products');
+        try {
+          const productsData = await apiGet<{products: Product[]}>(`products?shopId=${id}&status=available`);
+          setProducts(productsData.products || []);
+        } catch (productsError) {
+          console.error('Error fetching shop products:', productsError);
+          // We don't set the main error since the shop was loaded successfully
+          setProducts([]);
         }
-        
-        const productsData = await productsResponse.json();
-        setProducts(productsData.products || []);
-        
       } catch (err) {
-        console.error('Error fetching shop details:', err);
+        console.error('Error fetching shop:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);

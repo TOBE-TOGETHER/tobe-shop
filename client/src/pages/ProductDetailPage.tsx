@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link as RouterLink } from 'react-router-dom';
+import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Breadcrumbs,
@@ -36,6 +36,8 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import StoreIcon from '@mui/icons-material/Store';
+import { apiGet } from '../utils/api';
+import { useCart } from '../contexts/CartContext';
 
 // Define interfaces
 interface Product {
@@ -119,12 +121,15 @@ const ProductDetailPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState('M');
   const [selectedColor, setSelectedColor] = useState('#4285F4');
   const theme = useTheme();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   
   // State for API data
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   // Fetch product data from API
   useEffect(() => {
@@ -133,22 +138,19 @@ const ProductDetailPage: React.FC = () => {
       setError(null);
       
       try {
-        const response = await fetch(`http://localhost:8080/api/products/${id}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch product');
-        }
-        
-        const data = await response.json();
+        // Use apiGet utility instead of fetch for product details
+        const data = await apiGet<{product: Product}>(`products/${id}`);
         setProduct(data.product);
         
         // Fetch shop details if we have a shopId
         if (data.product.shopId) {
-          const shopResponse = await fetch(`http://localhost:8080/api/shops/${data.product.shopId}`);
-          
-          if (shopResponse.ok) {
-            const shopData = await shopResponse.json();
+          try {
+            // Use apiGet utility instead of fetch for shop details
+            const shopData = await apiGet<{shop: Shop}>(`shops/${data.product.shopId}`);
             setShop(shopData.shop);
+          } catch (shopError) {
+            console.error('Error fetching shop:', shopError);
+            // We don't set the main error state here since the product was loaded successfully
           }
         }
         
@@ -189,6 +191,26 @@ const ProductDetailPage: React.FC = () => {
     if (product && quantity < product.stock) {
       setQuantity(quantity + 1);
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: quantity,
+      image: product.image,
+      stock: product.stock
+    });
+    
+    setAddedToCart(true);
+    
+    // Reset after a short delay
+    setTimeout(() => {
+      setAddedToCart(false);
+    }, 3000);
   };
 
   // Render the benefit item
@@ -539,9 +561,10 @@ const ProductDetailPage: React.FC = () => {
                   borderRadius: 1,
                   fontWeight: 'bold',
                 }}
-                disabled={product.stock <= 0}
+                disabled={product?.stock <= 0}
+                onClick={handleAddToCart}
               >
-                {t('product.addToCart')}
+                {addedToCart ? t('product.addedToCart') : t('product.addToCart')}
               </Button>
               <Button 
                 variant="contained" 
@@ -740,6 +763,17 @@ const ProductDetailPage: React.FC = () => {
           </Typography>
         </Paper>
       </Box>
+
+      {addedToCart && (
+        <Button
+          variant="contained" 
+          color="secondary"
+          onClick={() => navigate('/cart')}
+          sx={{ mt: 1 }}
+        >
+          {t('product.goToCart')}
+        </Button>
+      )}
     </Container>
   );
 };

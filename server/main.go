@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +24,10 @@ import (
 var db *gorm.DB
 
 func main() {
+	// Parse command line flags
+	port := flag.String("port", "8080", "Port to run the server on")
+	flag.Parse()
+
 	// Initialize database
 	config.ConnectDatabase()
 
@@ -31,7 +36,7 @@ func main() {
 
 	// Setup CORS middleware
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
@@ -84,18 +89,19 @@ func main() {
 		api.GET("/users/:id", middleware.AuthMiddleware(), getUser)
 		api.PUT("/users/:id", middleware.AuthMiddleware(), updateUser)
 		api.PUT("/users/:id/avatar", middleware.AuthMiddleware(), updateUserAvatar)
+
+		// Simple health check endpoint
+		api.GET("/health", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"status": "ok",
+			})
+		})
 	}
 
-	// Simple health check endpoint
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
-
 	// Start the server
-	log.Println("Server starting on http://localhost:8080")
-	if err := r.Run(":8080"); err != nil {
+	serverAddr := ":" + *port
+	log.Println("Server starting on http://localhost" + serverAddr)
+	if err := r.Run(serverAddr); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }

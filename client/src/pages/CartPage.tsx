@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,57 +23,24 @@ import { useTranslation } from 'react-i18next';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-
-// Updated cart data with Pexels images
-const initialCartItems = [
-  {
-    id: 1,
-    name: 'Premium Smartphone',
-    price: 999.99,
-    quantity: 1,
-    image: 'https://images.pexels.com/photos/607812/pexels-photo-607812.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-  {
-    id: 3,
-    name: 'Wireless Headphones',
-    price: 299.99,
-    quantity: 2,
-    image: 'https://images.pexels.com/photos/577769/pexels-photo-577769.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-];
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
+import { useCart } from '../contexts/CartContext';
 
 const CartPage: React.FC = () => {
   const { t } = useTranslation();
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
   const navigate = useNavigate();
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
 
   const handleQuantityChange = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    updateQuantity(id, newQuantity);
   };
 
   const handleRemoveItem = (id: number) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+    removeFromCart(id);
   };
 
   const calculateSubtotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return getCartTotal();
   };
 
   const calculateTax = () => {

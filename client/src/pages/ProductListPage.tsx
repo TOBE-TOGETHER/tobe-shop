@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import SearchIcon from '@mui/icons-material/Search';
 import InputAdornment from '@mui/material/InputAdornment';
 import ProductCard, { Product } from '../components/products/ProductCard';
+import { apiGet } from '../utils/api';
 
 // Define pagination response interface
 interface PaginationData {
@@ -104,14 +105,8 @@ const ProductListPage: React.FC = () => {
       // Add sort parameter
       queryParams.append('sort', sortBy);
       
-      // Fetch filtered products
-      const response = await fetch(`http://localhost:8080/api/products?${queryParams.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      
-      const data = await response.json();
+      // Use apiGet utility instead of fetch
+      const data = await apiGet<{products: Product[], pagination?: any}>(`products?${queryParams.toString()}`);
       setProducts(data.products || []);
       
       // Update pagination data

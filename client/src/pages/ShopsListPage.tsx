@@ -18,6 +18,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { useTranslation } from 'react-i18next';
+import { apiGet } from '../utils/api';
 
 // Define Shop interface
 interface Shop {
@@ -48,41 +49,25 @@ const ShopsListPage: React.FC = () => {
 
   // Fetch shops from API
   useEffect(() => {
+    const fetchShops = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Use apiGet utility instead of fetch
+        const data = await apiGet<{shops: Shop[]}>('shops');
+        setShops(data.shops || []);
+        console.log('Fetched shops:', data);
+      } catch (err) {
+        console.error('Error fetching shops:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchShops();
   }, []);
-
-  const fetchShops = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('http://localhost:8080/api/shops');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch shops');
-      }
-      
-      const data = await response.json();
-      
-      if (data && data.shops) {
-        // Process each shop to ensure it has the correct format
-        const processedShops = data.shops.map((shop: Shop) => ({
-          ...shop,
-          // If logo is missing, provide a default
-          logo: shop.logo || 'https://via.placeholder.com/600x400?text=Shop',
-        }));
-        
-        setShops(processedShops);
-      } else {
-        setShops([]);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch shops');
-      console.error('Error fetching shops:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
