@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,17 +18,27 @@ import {
   TableRow,
   TextField,
   Typography,
+  Alert,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const CartPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+
+  useEffect(() => {
+    // Verify cart items are loaded from localStorage
+    const savedCart = localStorage.getItem('tobe-shop-cart');
+    console.log('CartPage mounted: localStorage cart items:', savedCart);
+    console.log('CartPage mounted: cartItems from context:', cartItems);
+  }, []);
 
   const handleQuantityChange = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -52,7 +62,13 @@ const CartPage: React.FC = () => {
   };
 
   const handleCheckout = () => {
-    // In a real app, redirect to checkout page or process payment
+    if (!isAuthenticated) {
+      // If user is not authenticated, redirect to login
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+    
+    // Redirect to checkout page
     navigate('/checkout');
   };
 

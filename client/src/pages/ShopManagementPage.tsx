@@ -596,18 +596,20 @@ const ShopManagementPage: React.FC = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseForm} disabled={loading}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
-          >
-            {loading ? t('common.loading') : t('common.save')}
-          </Button>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <Button onClick={handleCloseForm} disabled={loading} sx={{ mr: 1 }}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              variant="contained"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : null}
+            >
+              {loading ? t('common.loading') : t('common.save')}
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
 

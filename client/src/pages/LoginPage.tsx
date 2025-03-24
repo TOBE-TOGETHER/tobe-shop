@@ -18,6 +18,7 @@ import { apiPost } from '../utils/api';
 
 interface LocationState {
   message?: string;
+  from?: string;
 }
 
 // Define the response type for login API
@@ -58,13 +59,16 @@ const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const { t } = useTranslation();
   
+  // Get the 'from' location if it exists
+  const from = (location.state as LocationState)?.from || '/';
+  
   // Check for success message in location state (e.g., after registration)
   useEffect(() => {
     const state = location.state as LocationState;
     if (state?.message) {
       setSuccessMessage(state.message);
-      // Clear the location state to prevent showing the message again on refresh
-      window.history.replaceState({}, document.title);
+      // Clear the message but keep the 'from' location
+      window.history.replaceState({ from: state.from }, document.title);
     }
   }, [location]);
 
@@ -134,9 +138,9 @@ const LoginPage: React.FC = () => {
       // Show success message briefly before redirecting
       setSuccessMessage(t('auth.loginSuccess'));
       
-      // Redirect to home page after successful login
+      // Redirect to the 'from' location or home page after successful login
       setTimeout(() => {
-        navigate('/');
+        navigate(from);
       }, 1000);
     } catch (error) {
       console.error('Login error:', error);

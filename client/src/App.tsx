@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import ShopManagementPage from './pages/ShopManagementPage';
 import ProductManagementPage from './pages/ProductManagementPage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProfilePage from './pages/ProfilePage';
 import ShopsListPage from './pages/ShopsListPage';
@@ -222,6 +223,7 @@ const App: React.FC = () => {
                     } 
                   />
                   <Route path="/cart" element={<CartPage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/shops/:id" element={<ShopDetailPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>

@@ -196,21 +196,31 @@ const ProductDetailPage: React.FC = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    addToCart({
+    console.log('Adding product to cart:', product.name, 'quantity:', quantity);
+    
+    const cartItem = {
       id: product.id,
       name: product.name,
       price: product.price,
       quantity: quantity,
       image: product.image,
       stock: product.stock
-    });
+    };
+    
+    addToCart(cartItem);
     
     setAddedToCart(true);
     
-    // Reset after a short delay
+    // Show a success notification for a few seconds
     setTimeout(() => {
       setAddedToCart(false);
     }, 3000);
+    
+    // Verify that the item was added to localStorage (for debugging)
+    setTimeout(() => {
+      const savedCart = localStorage.getItem('tobe-shop-cart');
+      console.log('Cart after adding item (from localStorage):', savedCart);
+    }, 100);
   };
 
   // Render the benefit item

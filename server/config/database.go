@@ -37,3 +37,8 @@ func ConnectDatabase() {
 
 	DB = database
 }
+
+// GetDB returns the database connection
+func GetDB() *gorm.DB {
+	return DB
+}

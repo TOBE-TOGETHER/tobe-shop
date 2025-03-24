@@ -961,16 +961,237 @@ func updateShop(c *gin.Context) {
 
 // Order handlers
 func getOrders(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Get all orders endpoint"})
+	// Get user ID from token
+	userID, err := getUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	// Parse pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	// Calculate offset
+	offset := (page - 1) * limit
+
+	// Get orders from database
+	var orders []models.Order
+	var total int64
+
+	// Count total orders
+	if err := db.Model(&models.Order{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count orders"})
+		return
+	}
+
+	// Get paginated orders with associated products
+	if err := db.Preload("OrderItems").Preload("OrderItems.Product").
+		Where("user_id = ?", userID).
+		Offset(offset).Limit(limit).
+		Order("created_at DESC").
+		Find(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get orders"})
+		return
+	}
+
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	// Return orders with pagination info
+	c.JSON(http.StatusOK, gin.H{
+		"orders": orders,
+		"pagination": gin.H{
+			"total":      total,
+			"totalPages": totalPages,
+			"page":       page,
+			"limit":      limit,
+		},
+	})
 }
 
 func getOrder(c *gin.Context) {
-	id := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{"message": "Get order endpoint", "id": id})
+	// Get user ID from token
+	userID, err := getUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	// Get order ID from URL
+	orderID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	// Get order from database
+	var order models.Order
+	if err := db.Preload("OrderItems").Preload("OrderItems.Product").
+		First(&order, orderID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+		return
+	}
+
+	// Check if order belongs to the user
+	if order.UserID != uint(userID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to view this order"})
+		return
+	}
+
+	// Return order
+	c.JSON(http.StatusOK, gin.H{"order": order})
 }
 
 func createOrder(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Create order endpoint"})
+	// Get user ID from token
+	userID, err := getUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	// Parse request
+	var orderRequest struct {
+		OrderItems []struct {
+			ProductID uint `json:"productId"`
+			Quantity  int  `json:"quantity"`
+		} `json:"orderItems"`
+		ShippingDetails struct {
+			FullName     string `json:"fullName"`
+			AddressLine1 string `json:"addressLine1"`
+			AddressLine2 string `json:"addressLine2"`
+			City         string `json:"city"`
+			State        string `json:"state"`
+			PostalCode   string `json:"postalCode"`
+			Country      string `json:"country"`
+			Phone        string `json:"phone"`
+		} `json:"shippingDetails"`
+		PaymentInfo struct {
+			BankCode string `json:"bankCode"`
+			VssCode  string `json:"vssCode"`
+		} `json:"paymentInfo"`
+	}
+
+	if err := c.ShouldBindJSON(&orderRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		return
+	}
+
+	// Check if there are order items
+	if len(orderRequest.OrderItems) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Order must contain at least one item"})
+		return
+	}
+
+	// Validate shipping address
+	if orderRequest.ShippingDetails.FullName == "" ||
+		orderRequest.ShippingDetails.AddressLine1 == "" ||
+		orderRequest.ShippingDetails.City == "" ||
+		orderRequest.ShippingDetails.State == "" ||
+		orderRequest.ShippingDetails.PostalCode == "" ||
+		orderRequest.ShippingDetails.Country == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Complete shipping details are required"})
+		return
+	}
+
+	// Format the shipping and billing addresses
+	shippingAddress := fmt.Sprintf("%s, %s, %s, %s, %s, %s",
+		orderRequest.ShippingDetails.FullName,
+		orderRequest.ShippingDetails.AddressLine1,
+		orderRequest.ShippingDetails.City,
+		orderRequest.ShippingDetails.State,
+		orderRequest.ShippingDetails.PostalCode,
+		orderRequest.ShippingDetails.Country)
+
+	// Use shipping address as billing address too
+	billingAddress := shippingAddress
+
+	// Create the order
+	order := models.Order{
+		UserID:          uint(userID),
+		Status:          models.Pending,
+		ShippingAddress: shippingAddress,
+		BillingAddress:  billingAddress,
+		OrderItems:      []models.OrderItem{},
+	}
+
+	// Start a transaction
+	tx := db.Begin()
+
+	// Calculate total and create order items
+	var total float64 = 0
+	for _, item := range orderRequest.OrderItems {
+		// Get product to confirm price and check stock
+		var product models.Product
+		if err := tx.First(&product, item.ProductID).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Product not found: " + strconv.FormatUint(uint64(item.ProductID), 10)})
+			return
+		}
+
+		// Check if there's enough stock
+		if product.Stock < item.Quantity {
+			tx.Rollback()
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Not enough stock for product %s. Available: %d, Requested: %d",
+					product.Name, product.Stock, item.Quantity),
+			})
+			return
+		}
+
+		// Calculate total price for item
+		itemTotalPrice := product.Price * float64(item.Quantity)
+
+		// Create order item
+		orderItem := models.OrderItem{
+			ProductID:  item.ProductID,
+			Quantity:   item.Quantity,
+			Price:      product.Price,
+			TotalPrice: itemTotalPrice,
+		}
+
+		order.OrderItems = append(order.OrderItems, orderItem)
+		total += itemTotalPrice
+
+		// Update product stock
+		product.Stock -= item.Quantity
+		if err := tx.Save(&product).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product stock: " + err.Error()})
+			return
+		}
+	}
+
+	// Set the total
+	order.Total = total
+
+	// Simulate payment processing
+	// In a real system, we would actually process the payment
+	// but since this is a fake implementation, we'll just simulate it
+	// and always return success
+	paymentID := fmt.Sprintf("PAY-%d-%d", userID, time.Now().Unix())
+	order.PaymentID = paymentID
+	order.Status = models.Paid
+
+	// Create the order
+	if err := tx.Create(&order).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order: " + err.Error()})
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction: " + err.Error()})
+		return
+	}
+
+	// Return the created order
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Order created successfully",
+		"order":   order,
+	})
 }
 
 func updateOrder(c *gin.Context) {
