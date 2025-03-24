@@ -1,6 +1,6 @@
 ## TobeShop
 
-This is a shopping website project for study purposes, developed with the assistance of Cursor + MCP servers.
+This is a shopping website project for study purposes, developed with the assistance of Cursor + MCP servers, no one-line manual code.
 
 ## Technical Stack
 
