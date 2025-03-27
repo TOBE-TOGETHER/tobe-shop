@@ -1,6 +1,6 @@
 ## TobeShop
 
-This is a shopping website project for study purposes, developed with the assistance of Cursor + MCP servers.
+This is a shopping website project for study purposes, developed with the assistance of Cursor + MCP servers, no one-line manual code.
 
 ## Technical Stack
 
@@ -81,3 +81,12 @@ The frontend development server will run on http://localhost:3000
 ## License
 
 This project is for educational purposes only.
+
+## Screenshots
+![TobeShop _ Next-Gen Shopping](https://github.com/user-attachments/assets/5e294242-919a-493d-81fd-5674fbfb4665)
+![TobeShop _ Next-Gen Shopping (7)](https://github.com/user-attachments/assets/60e630e1-e1f2-4153-8d94-26bfb6b2853f)
+![TobeShop _ Next-Gen Shopping (6)](https://github.com/user-attachments/assets/88accef4-d3d1-40c5-9d06-3c76a975218a)
+![TobeShop _ Next-Gen Shopping (4)](https://github.com/user-attachments/assets/e2fab7fc-f559-44fe-86b1-49b1d5c03b47)
+![TobeShop _ Next-Gen Shopping (2)](https://github.com/user-attachments/assets/cd1842c4-f1e9-497e-9bdd-e2efc46b5498)
+![TobeShop _ Next-Gen Shopping (1)](https://github.com/user-attachments/assets/d4ab24fb-b87b-44e2-933c-0734247d5e92)
+
