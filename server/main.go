@@ -244,42 +244,60 @@ func registerUser(c *gin.Context) {
 		return
 	}
 
+	// Check if username already exists
+	var existingUser models.User
+	if err := config.DB.Where("username = ?", user.Username).First(&existingUser).Error; err == nil {
+		log.Printf("DEBUG: Username %s already exists\n", user.Username)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Username already exists",
+		})
+		return
+	}
+
+	// Check if email already exists
+	if err := config.DB.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		log.Printf("DEBUG: Email %s already exists\n", user.Email)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Email already exists",
+		})
+		return
+	}
+
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("DEBUG: Password hashing failed: %s\n", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		log.Printf("DEBUG: Error hashing password: %s\n", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error processing password",
+		})
 		return
 	}
 	user.Password = string(hashedPassword)
-	log.Println("DEBUG: Password hashed successfully")
 
-	// Save user to database
-	result := config.DB.Create(&user)
-	if result.Error != nil {
-		log.Printf("DEBUG: Database error: %s\n", result.Error.Error())
-		// Check for duplicate key errors
-		if strings.Contains(result.Error.Error(), "UNIQUE constraint failed") {
-			if strings.Contains(result.Error.Error(), "username") {
-				c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
-			} else if strings.Contains(result.Error.Error(), "email") {
-				c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-			} else {
-				c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
-			}
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user: " + result.Error.Error()})
-		}
+	// Create the user in the database
+	if err := config.DB.Create(&user).Error; err != nil {
+		log.Printf("DEBUG: Error creating user: %s\n", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error creating user: " + err.Error(),
+		})
 		return
 	}
-	log.Printf("DEBUG: User created successfully with ID %d\n", user.ID)
 
-	// Hide password in the response
-	user.Password = ""
+	// Generate token for the new user
+	token := fmt.Sprintf("%d_%s_%d", user.ID, user.Email, time.Now().Unix())
 
+	// Return success response with user data and token
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User registered successfully",
-		"user":    user,
+		"user": gin.H{
+			"id":        user.ID,
+			"username":  user.Username,
+			"email":     user.Email,
+			"firstName": user.FirstName,
+			"lastName":  user.LastName,
+			"role":      user.Role,
+		},
+		"token": token,
 	})
 }
 

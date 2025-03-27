@@ -16,6 +16,10 @@ import NotFoundPage from './pages/NotFoundPage';
 import ProfilePage from './pages/ProfilePage';
 import ShopsListPage from './pages/ShopsListPage';
 import ShopDetailPage from './pages/ShopDetailPage';
+import AboutUsPage from './pages/AboutUsPage';
+import ContactUsPage from './pages/ContactUsPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { I18nextProvider } from 'react-i18next';
@@ -206,6 +210,10 @@ const App: React.FC = () => {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/about" element={<AboutUsPage />} />
+                  <Route path="/contact" element={<ContactUsPage />} />
+                  <Route path="/terms" element={<TermsOfServicePage />} />
+                  <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route 
                     path="/my/shops" 
                     element={

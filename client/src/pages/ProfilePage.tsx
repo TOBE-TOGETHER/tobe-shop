@@ -1,33 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import {
-  Avatar,
   Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
   Container,
-  Divider,
-  Grid,
-  IconButton,
-  Paper,
-  Snackbar,
-  Tab,
-  Tabs,
-  TextField,
   Typography,
+  TextField,
+  Button,
+  Grid,
+  Avatar,
+  Snackbar,
   Alert,
+  IconButton,
+  CircularProgress,
+  Tabs,
+  Tab,
+  Divider
 } from '@mui/material';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
-import { useAuth } from '../contexts/AuthContext';
-import { useUser } from '../hooks/useUser';
 import { useTranslation } from 'react-i18next';
+import { useUser } from '../hooks/useUser';
+import { useAuth } from '../contexts/AuthContext';
 import { apiPut } from '../utils/api';
 
 // Importing the User interface from useUser.ts
@@ -83,18 +79,14 @@ const ProfilePage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const hasRefreshed = useRef(false);
   
   // Load fresh user data only once when component mounts
   useEffect(() => {
-    if (isAuthenticated && !hasRefreshed.current) {
-      hasRefreshed.current = true;
-      refresh().catch(err => {
-        console.error('Failed to refresh user data:', err);
-        setErrorMessage(t('profile.loadError'));
-      });
-    }
-  }, [isAuthenticated, refresh, t]);
+    refresh().catch(err => {
+      console.error('Failed to refresh user data:', err);
+      setErrorMessage(t('profile.loadError'));
+    });
+  }, [refresh, t]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -175,7 +167,7 @@ const ProfilePage: React.FC = () => {
       const userId = parts[0];
       
       // Use apiPut instead of fetch
-      const data = await apiPut<{user: User}>(`users/${userId}`, formData);
+      const data = await apiPut<{user: User}>(`users/${userId}`, formData, token);
       
       // Update user data in context using the useUser hook
       updateUser(data.user);
@@ -194,11 +186,6 @@ const ProfilePage: React.FC = () => {
     setSuccessMessage(null);
     setErrorMessage(null);
   };
-  
-  // If not authenticated, redirect to login
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
   
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -258,7 +245,7 @@ const ProfilePage: React.FC = () => {
         const userId = parts[0];
         
         // Use apiPut instead of fetch
-        const data = await apiPut<{user: User}>(`users/${userId}/avatar`, { avatar: dataUrl });
+        const data = await apiPut<{user: User}>(`users/${userId}/avatar`, { avatar: dataUrl }, token);
         
         // Update user data in context
         updateUser(data.user);

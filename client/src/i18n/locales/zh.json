@@ -15,7 +15,9 @@
     "shop": "商店",
     "shops": "商店",
     "myShop": "我的商店",
-    "myProducts": "我的商品"
+    "myProducts": "我的商品",
+    "aboutUs": "关于我们",
+    "contactUs": "联系我们"
   },
   "home": {
     "welcome": "欢迎来到TobeShop",
@@ -408,5 +410,185 @@
     "noShopWarning": "添加商品前需要先创建店铺",
     "createShopFirst": "先创建您的店铺",
     "noShopError": "请先创建店铺再添加商品"
+  },
+  "about": {
+    "title": "欢迎来到 Tobe Shop",
+    "subtitle": "您值得信赖的优质商品和卓越服务平台",
+    "mission": {
+      "title": "我们的使命",
+      "description": "打造一个无缝且安全的在线市场，连接买家与可信赖的卖家，提供优质商品和卓越的客户服务。"
+    },
+    "features": {
+      "title": "我们的服务",
+      "marketplace": "全球市场",
+      "marketplaceDesc": "连接全球卖家，发现独特商品",
+      "security": "安全购物",
+      "securityDesc": "先进的安全措施保护您的交易",
+      "delivery": "快速配送",
+      "deliveryDesc": "高效的物流和配送跟踪系统",
+      "support": "全天候支持",
+      "supportDesc": "专业的客服团队随时为您服务"
+    },
+    "values": {
+      "title": "我们的价值观",
+      "innovation": "创新",
+      "innovationDesc": "持续改进平台，提供最佳购物体验",
+      "integrity": "诚信",
+      "integrityDesc": "通过透明和诚实的商业实践建立信任",
+      "community": "社区",
+      "communityDesc": "创建一个让买家和卖家共同受益的活跃市场社区"
+    },
+    "contact": {
+      "title": "联系我们",
+      "email": "电子邮箱",
+      "phone": "电话"
+    }
+  },
+  "contact": {
+    "title": "联系我们",
+    "subtitle": "我们很乐意听取您的意见。发送消息给我们，我们会尽快回复。",
+    "getInTouch": "联系方式",
+    "sendMessage": "发送消息",
+    "messageSent": "您的消息已成功发送！",
+    "form": {
+      "name": "您的姓名",
+      "email": "您的邮箱",
+      "subject": "主题",
+      "message": "消息内容",
+      "send": "发送消息"
+    }
+  },
+  "terms": {
+    "title": "服务条款",
+    "introduction": {
+      "title": "简介",
+      "content": "欢迎使用TobeShop。访问和使用我们的平台即表示您同意受这些服务条款的约束。"
+    },
+    "userAgreement": {
+      "title": "用户协议",
+      "content": "使用我们的服务，即表示您同意遵守这些条款以及所有适用的法律和法规。"
+    },
+    "accountResponsibilities": {
+      "title": "账户责任",
+      "content": "您有责任维护您的账户和密码的机密性，并对您账户下的所有活动负责。"
+    },
+    "purchases": {
+      "title": "购买",
+      "content": "通过我们平台进行的所有购买都受我们的订单处理和配送政策约束。"
+    },
+    "sellerGuidelines": {
+      "title": "卖家指南",
+      "content": "卖家必须遵守我们的市场准则，包括准确的产品描述和公平定价。"
+    },
+    "intellectualProperty": {
+      "title": "知识产权",
+      "content": "TobeShop上的所有内容，包括标志、文本和图像，均受知识产权保护。"
+    },
+    "limitations": {
+      "title": "责任限制",
+      "content": "TobeShop对因使用我们的服务而产生的任何间接、偶然或后果性损害不承担责任。"
+    },
+    "termination": {
+      "title": "账户终止",
+      "content": "我们保留因违反我们的条款或任何其他原因终止或暂停账户的权利。"
+    },
+    "changes": {
+      "title": "条款变更",
+      "content": "我们可能随时修改这些条款。继续使用我们的服务即表示接受任何变更。"
+    },
+    "contact": {
+      "title": "联系我们",
+      "content": "如果您对这些服务条款有任何疑问，请联系我们。"
+    }
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "introduction": {
+      "content": "本隐私政策说明了TobeShop（'我们'）如何在您使用我们的网站和服务时收集、使用和保护您的个人信息。我们致力于确保您的隐私受到保护，并维护您对我们的信任。"
+    },
+    "scope": {
+      "title": "政策范围",
+      "content": "本政策适用于通过我们的网站（tobeshop.com）、移动应用程序以及任何相关服务、销售、营销或活动收集的所有信息。使用我们的平台即表示您同意根据本政策收集和使用信息。"
+    },
+    "informationCollection": {
+      "title": "我们收集的信息",
+      "content": "我们收集各种类型的信息以提供和改进我们的服务：",
+      "personal": {
+        "title": "个人信息",
+        "content": "姓名、电子邮件地址、邮寄地址、电话号码、出生日期、支付信息，以及在需要验证时的政府颁发的身份证明。"
+      },
+      "payment": {
+        "title": "交易信息",
+        "content": "支付卡详细信息、银行账户信息、购买历史、账单和送货地址以及与您的交易相关的其他详细信息。"
+      },
+      "usage": {
+        "title": "使用数据",
+        "content": "IP地址、浏览器类型、设备信息、操作系统、时区、浏览页面、点击链接和其他使用模式。"
+      }
+    },
+    "informationUse": {
+      "title": "我们如何使用您的信息",
+      "content": "我们将收集的信息用于各种目的，始终遵守适用的数据保护法律。",
+      "purposes": {
+        "title": "具体用途",
+        "content": "• 处理您的交易并维护您的账户\n• 提供客户支持并回应询问\n• 发送重要通知和更新\n• 检测和防止欺诈\n• 改进我们的服务和用户体验\n• 遵守法律义务\n• 发送营销通信（经您同意）"
+      }
+    },
+    "informationSharing": {
+      "title": "信息共享和披露",
+      "content": "我们不会出售您的个人信息。我们仅在以下情况下共享您的信息：",
+      "thirdParties": {
+        "title": "服务提供商",
+        "content": "我们与帮助我们运营平台、开展业务和服务用户的可信赖服务提供商共享信息，并受严格的保密协议约束。"
+      },
+      "legal": {
+        "title": "法律要求",
+        "content": "当法律要求、保护我们的权利或遵守司法程序、法院命令或法律程序时，我们可能会披露信息。"
+      }
+    },
+    "dataSecurity": {
+      "title": "数据安全",
+      "content": "我们实施适当的技术和组织安全措施来保护您的个人信息，包括加密、防火墙和安全套接层技术（SSL）。但是，通过互联网传输的方法并非100%安全，我们不能保证绝对的安全性。"
+    },
+    "cookies": {
+      "title": "Cookie和跟踪技术",
+      "content": "我们使用cookie和类似的跟踪技术来增强您的浏览体验并分析使用模式。",
+      "types": {
+        "title": "我们使用的Cookie类型",
+        "content": "• 网站功能必需的cookie\n• 用于理解用户行为的分析cookie\n• 用于定向营销的广告cookie\n• 用于记住您设置的偏好cookie"
+      }
+    },
+    "userRights": {
+      "title": "您的隐私权利",
+      "content": "关于您的个人信息，您享有以下权利：",
+      "access": {
+        "title": "访问和控制",
+        "content": "您可以随时通过账户设置请求访问您的个人信息、更正不准确的数据并更新您的偏好。"
+      },
+      "deletion": {
+        "title": "删除权",
+        "content": "您可以请求删除您的个人信息，但需遵守法律规定的某些例外情况，如我们依法必须保留的信息。"
+      }
+    },
+    "dataRetention": {
+      "title": "数据保留",
+      "content": "我们在实现本隐私政策中概述的目的所需的时间内保留您的个人信息，除非法律要求或允许更长的保留期限。当我们不再需要这些信息时，我们将安全地删除或匿名化处理。"
+    },
+    "internationalTransfers": {
+      "title": "国际数据传输",
+      "content": "您的信息可能会被传输到您居住国以外的国家并在那里处理。我们确保采取适当的保护措施来保护您的信息并遵守适用的数据保护法律。"
+    },
+    "childrenPrivacy": {
+      "title": "儿童隐私",
+      "content": "我们的服务不面向13岁以下的儿童。我们不会故意收集或维护13岁以下儿童的个人信息。如果我们发现我们收集了13岁以下儿童的个人信息，我们将采取措施删除这些信息。"
+    },
+    "changes": {
+      "title": "隐私政策的变更",
+      "content": "我们可能会定期更新本隐私政策，以反映我们做法的变化或出于其他运营、法律或监管原因。我们会通过在网站上发布更新后的政策并更新'最后更新'日期来通知您任何重大变更。"
+    },
+    "contact": {
+      "title": "联系我们",
+      "content": "如果您对本隐私政策或我们的隐私实践有任何问题、疑虑或请求，请联系我们的隐私团队："
+    }
   }
 }

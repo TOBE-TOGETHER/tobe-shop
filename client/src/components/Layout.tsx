@@ -1,95 +1,64 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import {
-  AppBar,
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Container, 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Button, 
+  IconButton, 
+  Menu, 
+  MenuItem, 
   Avatar,
-  Box,
-  Button,
-  Container,
-  Divider,
   Drawer,
-  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Typography,
-  Chip,
-  CssBaseline,
-  Tooltip,
+  Divider,
   Badge,
+  CssBaseline
 } from '@mui/material';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import LogoutIcon from '@mui/icons-material/Logout';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import PersonIcon from '@mui/icons-material/Person';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '../hooks/useUser';
 import { useCart } from '../contexts/CartContext';
-import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 import Footer from './Footer';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const { isAuthenticated, isSeller, logout } = useAuth();
-  const { user, refresh } = useUser();
+  const { user } = useUser();
   const { getCartCount } = useCart();
-  const hasRefreshed = useRef(false);
   const { t } = useTranslation();
 
-  // Refresh user data only once when component mounts
-  useEffect(() => {
-    if (isAuthenticated && !hasRefreshed.current) {
-      hasRefreshed.current = true;
-      refresh().catch(err => {
-        console.error('Failed to refresh user data:', err);
-      });
-    }
-  }, [isAuthenticated, refresh]);
-
-  // Reset the refresh flag when auth state changes
-  useEffect(() => {
-    if (!isAuthenticated) {
-      hasRefreshed.current = false;
-    }
-  }, [isAuthenticated]);
-
   const handleDrawerToggle = () => {
-    setMobileOpen((prevState) => !prevState);
+    setMobileOpen(!mobileOpen);
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
+  const handleClose = () => {
     setAnchorEl(null);
   };
 
   const handleLogout = () => {
-    // Handle logout logic here
     logout();
-    handleMenuClose();
+    handleClose();
     navigate('/');
-  };
-
-  // Generate user initial avatar if no avatar image available
-  const getUserInitials = () => {
-    if (!user) return '';
-    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   };
 
   const drawer = (
@@ -112,6 +81,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <ListItem disablePadding>
           <ListItemButton component={RouterLink} to="/shops" sx={{ textAlign: 'center' }}>
             <ListItemText primary={t('nav.shops')} />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton component={RouterLink} to="/about" sx={{ textAlign: 'center' }}>
+            <ListItemText primary={t('nav.aboutUs')} />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton component={RouterLink} to="/contact" sx={{ textAlign: 'center' }}>
+            <ListItemText primary={t('nav.contactUs')} />
           </ListItemButton>
         </ListItem>
         {!isAuthenticated ? (
@@ -185,6 +164,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Button color="inherit" component={RouterLink} to="/shops">
               {t('nav.shops')}
             </Button>
+            <Button color="inherit" component={RouterLink} to="/about">
+              {t('nav.aboutUs')}
+            </Button>
+            <Button color="inherit" component={RouterLink} to="/contact">
+              {t('nav.contactUs')}
+            </Button>
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
@@ -213,7 +198,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 aria-label="account of current user"
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
-                onClick={handleMenuOpen}
+                onClick={handleMenu}
               >
                 {user?.avatar ? (
                   <Avatar
@@ -230,19 +215,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 anchorEl={anchorEl}
                 keepMounted
                 open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
+                onClose={handleClose}
               >
-                <MenuItem onClick={handleMenuClose} component={RouterLink} to="/profile">
+                <MenuItem onClick={handleClose} component={RouterLink} to="/profile">
                   <PersonIcon fontSize="small" sx={{ mr: 1 }} />
                   {t('nav.profile')}
                 </MenuItem>
                 {isSeller && (
                   <>
-                    <MenuItem onClick={handleMenuClose} component={RouterLink} to="/my/shops">
+                    <MenuItem onClick={handleClose} component={RouterLink} to="/my/shops">
                       <StorefrontIcon fontSize="small" sx={{ mr: 1 }} />
                       {t('nav.myShop')}
                     </MenuItem>
-                    <MenuItem onClick={handleMenuClose} component={RouterLink} to="/my/products">
+                    <MenuItem onClick={handleClose} component={RouterLink} to="/my/products">
                       <InventoryIcon fontSize="small" sx={{ mr: 1 }} />
                       {t('nav.myProducts')}
                     </MenuItem>

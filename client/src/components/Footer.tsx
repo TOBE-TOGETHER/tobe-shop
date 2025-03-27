@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Container, Typography, Link, Stack, Divider } from '@mui/material';
+import { Box, Container, Typography, Link, Stack } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
@@ -34,16 +35,16 @@ const Footer: React.FC = () => {
           </Box>
           
           <Stack direction="row" spacing={3}>
-            <Link href="#" color="inherit" underline="hover">
+            <Link component={RouterLink} to="/about" color="inherit" underline="hover">
               {t('footer.aboutUs')}
             </Link>
-            <Link href="#" color="inherit" underline="hover">
+            <Link component={RouterLink} to="/contact" color="inherit" underline="hover">
               {t('footer.contactUs')}
             </Link>
-            <Link href="#" color="inherit" underline="hover">
+            <Link component={RouterLink} to="/terms" color="inherit" underline="hover">
               {t('footer.terms')}
             </Link>
-            <Link href="#" color="inherit" underline="hover">
+            <Link component={RouterLink} to="/privacy" color="inherit" underline="hover">
               {t('footer.privacy')}
             </Link>
           </Stack>
